@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Frontier Development | Web Development Beyond Limits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.11.4/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #00cec9;
+            --dark: #0f0e17;
+            --light: #fffffe;
+            --accent: #ff8906;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .glow {
+            transition: all 0.3s ease;
+        }
+        
+        .glow:hover {
+            filter: drop-shadow(0 0 10px var(--primary));
+            transform: translateY(-5px);
+        }
+        
+        .click-effect {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            animation: clickPulse 0.6s ease-out forwards;
+        }
+        
+        @keyframes clickPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(3);
+                opacity: 0;
+            }
+        }
+        
+        .parallax {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        
+        .star-map {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .star:hover {
+            transform: scale(3);
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+        
+        .constellation {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--secondary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--secondary);
+        }
+        
+        .constellation-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(0,206,201,0.5), rgba(0,206,201,0));
+            transform-origin: left center;
+        }
+        
+        .service-card {
+            background: rgba(15, 14, 23, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .floating {
+            animation: floating 6s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating-delay-1 {
+            animation-delay: 1s;
+        }
+        
+        .floating-delay-2 {
+            animation-delay: 2s;
+        }
+        
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 50px;
+            border: 2px solid var(--light);
+            border-radius: 15px;
+        }
+        
+        .scroll-indicator::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: var(--light);
+            border-radius: 50%;
+            transform: translateX(-50%);
+            animation: scrollDown 2s infinite;
+        }
+        
+        @keyframes scrollDown {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(-50%);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(20px) translateX(-50%);
+            }
+        }
+        
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            filter: drop-shadow(0 0 20px rgba(108, 92, 231, 0.5));
+        }
+        
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .parallax {
+                background-attachment: scroll;
+            }
+        }
+    </style>
+</head>
+<body class="relative">
+    <!-- Starfield Background -->
+    <div id="starfield"></div>
+    
+    <!-- Click Effects Container -->
+    <div id="click-effects"></div>
+    
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-opacity-90 backdrop-filter backdrop-blur-lg bg-gray-900 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span class="text-2xl font-bold gradient-text">Final Frontier</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-white hover:text-primary-400">Home</a>
+                        <a href="#services" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-white hover:text-primary-400">Services</a>
+                        <a href="#portfolio" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-white hover:text-primary-400">Portfolio</a>
+                        <a href="#about" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-white hover:text-primary-400">About</a>
+                        <a href="#contact" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-white hover:text-primary-400">Contact</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button class="text-white focus:outline-none">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Hero Section with Interactive Star Map -->
+    <section id="home" class="star-map relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0" id="interactive-stars"></div>
+        
+        <div class="container mx-auto px-6 z-10 text-center">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 gradient-text">Final Frontier Development</h1>
+                <p class="text-xl md:text-2xl mb-8 text-gray-300">Pushing the boundaries of web development into uncharted territories</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="#contact" class="glow px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full text-white font-bold hover:from-purple-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-105">Launch Project</a>
+                    <a href="#services" class="glow px-8 py-3 border-2 border-purple-500 rounded-full text-white font-bold hover:bg-purple-900 hover:bg-opacity-30 transition-all duration-300 transform hover:scale-105">Explore Services</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scroll-indicator"></div>
+        
+        <!-- Floating Planets -->
+        <div class="planet floating" style="width: 150px; height: 150px; background: radial-gradient(circle at 30% 30%, #6c5ce7, #0f0e17); top: 20%; left: 10%;"></div>
+        <div class="planet floating floating-delay-1" style="width: 100px; height: 100px; background: radial-gradient(circle at 30% 30%, #00cec9, #0f0e17); top: 70%; left: 85%;"></div>
+        <div class="planet floating floating-delay-2" style="width: 80px; height: 80px; background: radial-gradient(circle at 30% 30%, #ff8906, #0f0e17); top: 10%; right: 10%;"></div>
+        
+        <div class="ring floating" style="width: 250px; height: 250px; top: 60%; left: 15%;"></div>
+        <div class="ring floating floating-delay-1" style="width: 180px; height: 180px; top: 30%; right: 10%;"></div>
+    </section>
+    
+    <!-- Services Section -->
+    <section id="services" class="py-20 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10">
+            <div class="constellation" style="top: 20%; left: 15%;"></div>
+            <div class="constellation" style="top: 30%; left: 25%;"></div>
+            <div class="constellation" style="top: 40%; left: 35%;"></div>
+            <div class="constellation" style="top: 50%; left: 45%;"></div>
+            <div class="constellation" style="top: 60%; left: 55%;"></div>
+            <div class="constellation" style="top: 70%; left: 65%;"></div>
+            <div class="constellation" style="top: 80%; left: 75%;"></div>
+            
+            <div class="constellation-line" style="top: 20%; left: 15%; width: 10%; transform: rotate(45deg);"></div>
+            <div class="constellation-line" style="top: 30%; left: 25%; width: 10%; transform: rotate(-30deg);"></div>
+            <div class="constellation-line" style="top: 40%; left: 35%; width: 10%; transform: rotate(15deg);"></div>
+        </div>
+        
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 gradient-text">My Services</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">I provide cutting-edge web solutions that propel your business into the digital stratosphere</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-purple-500">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Web Development</h3>
+                    <p class="text-gray-400">Custom websites built with the latest technologies to ensure performance, security, and scalability.</p>
+                </div>
+                
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-blue-500">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Responsive Design</h3>
+                    <p class="text-gray-400">Flawless user experience across all devices with our mobile-first approach to design.</p>
+                </div>
+                
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-green-500">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Performance Optimization</h3>
+                    <p class="text-gray-400">Lightning-fast load times and optimized performance to keep users engaged.</p>
+                </div>
+                
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-yellow-500">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">E-Commerce Solutions</h3>
+                    <p class="text-gray-400">Powerful online stores that convert visitors into customers and drive sales.</p>
+                </div>
+                
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-red-500">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">SEO Optimization</h3>
+                    <p class="text-gray-400">Increase your visibility and climb search engine rankings with our proven strategies.</p>
+                </div>
+                
+                <div class="service-card glow rounded-xl p-8">
+                    <div class="text-5xl mb-6 text-pink-500">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Ongoing Support</h3>
+                    <p class="text-gray-400">24/7 monitoring and support to keep your digital presence running smoothly.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="py-20 bg-gray-900 bg-opacity-70 relative overflow-hidden parallax" style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1352&q=80');">
+        <div class="absolute inset-0 bg-black bg-opacity-70"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 gradient-text">My Portfolio</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">Explore my stellar projects that have launched businesses to new heights</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="glow group relative overflow-hidden rounded-xl h-64">
+                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-1.2.1&auto=format&fit=crop&w=1074&q=80" alt="Project 1" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Nebula Analytics</h3>
+                            <p class="text-gray-300">Data visualization platform</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glow group relative overflow-hidden rounded-xl h-64">
+                    <img src="https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Project 2" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">HorizonV3</h3>
+                            <p class="text-gray-300">Games to test your coding knowledge and hone skills</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glow group relative overflow-hidden rounded-xl h-64">
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Project 3" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Quantum Finance</h3>
+                            <p class="text-gray-300">Next-gen financial platform</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="#" class="inline-block px-8 py-3 border-2 border-purple-500 rounded-full text-white font-bold hover:bg-purple-900 hover:bg-opacity-30 transition-all duration-300">View All Projects</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- About Section -->
+    <section id="about" class="py-20 relative overflow-hidden">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col lg:flex-row items-center">
+                <div class="lg:w-1/2 mb-12 lg:mb-0 lg:pr-12">
+                    <h2 class="text-4xl md:text-5xl font-bold mb-6 gradient-text">About Final Frontier</h2>
+                    <p class="text-gray-400 mb-6">Passionate development, intuituve design, and digital strategies dedicated to pushing the boundaries of web technology.</p>
+                    <p class="text-gray-400 mb-6">Founded in 2025 , Ive helped over 75 businesses establish their digital presence and achieve their online goals.</p>
+                    <p class="text-gray-400 mb-8">My mission is to deliver innovative, high-performance web solutions that stand out in the crowded digital universe.</p>
+                    <div class="flex space-x-4">
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-purple-500">200+</div>
+                            <div class="text-gray-400">Projects</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-blue-500">98%</div>
+                            <div class="text-gray-400">Satisfaction</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-green-500">50+</div>
+                            <div class="text-gray-400">Clients</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 relative">
+                    <div class="relative">
+                        <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-900 rounded-full opacity-20 animate-pulse"></div>
+                        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-blue-900 rounded-full opacity-20 animate-pulse delay-1000"></div>
+                        <div class="relative z-10 rounded-xl overflow-hidden border border-gray-800">
+                            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Our Team" class="w-full h-auto">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-gray-900 bg-opacity-90 relative overflow-hidden">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4 gradient-text">Ready for Launch?</h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">Contact me to discuss your project and begin your journey into the digital frontier</p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto bg-gray-800 bg-opacity-50 rounded-xl p-8 border border-gray-700 backdrop-filter backdrop-blur-lg">
+                <form class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Your Name</label>
+                            <input type="text" id="name" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-400 transition-all duration-300">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Your Email</label>
+                            <input type="email" id="email" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-400 transition-all duration-300">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="subject" class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                        <input type="text" id="subject" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-400 transition-all duration-300">
+                    </div>
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-300 mb-1">Your Message</label>
+                        <textarea id="message" rows="5" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-400 transition-all duration-300"></textarea>
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-500 rounded-lg text-white font-bold hover:from-purple-700 hover:to-blue-600 transition-all duration-300 transform hover:scale-105">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-black bg-opacity-90 py-12 border-t border-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <span class="text-2xl font-bold gradient-text">Final Frontier</span>
+                    <p class="text-gray-400 mt-2">Web Development Beyond Limits</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fab fa-facebook-f text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fab fa-linkedin-in text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors duration-300">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500 text-sm mb-4 md:mb-0">© 2024 Final Frontier Development. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors duration-300">Privacy Policy</a>
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors duration-300">Terms of Service</a>
+                    <a href="#" class="text-gray-500 hover:text-white text-sm transition-colors duration-300">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Three.js Starfield Background
+        const starfield = document.getElementById('starfield');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        starfield.appendChild(renderer.domElement);
+        
+        // Create stars
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const starsVertices = [];
+        for (let i = 0; i < 10000; i++) {
+            const x = (Math.random() - 0.5) * 2000;
+            const y = (Math.random() - 0.5) * 2000;
+            const z = (Math.random() - 0.5) * 2000;
+            starsVertices.push(x, y, z);
+        }
+        
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+        
+        camera.position.z = 1;
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            stars.rotation.x += 0.0001;
+            stars.rotation.y += 0.0001;
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Interactive Star Map
+        const interactiveStars = document.getElementById('interactive-stars');
+        const starsCount = 200;
+        
+        for (let i = 0; i < starsCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // Random position
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            
+            // Random size and opacity
+            const size = Math.random() * 3 + 1;
+            const opacity = Math.random() * 0.7 + 0.3;
+            
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.opacity = opacity;
+            
+            // Random animation delay
+            star.style.animationDelay = `${Math.random() * 5}s`;
+            
+            interactiveStars.appendChild(star);
+        }
+        
+        // Click Effects
+        document.addEventListener('click', function(e) {
+            const clickEffect = document.createElement('div');
+            clickEffect.className = 'click-effect';
+            clickEffect.style.left = `${e.clientX}px`;
+            clickEffect.style.top = `${e.clientY}px`;
+            
+            document.getElementById('click-effects').appendChild(clickEffect);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                clickEffect.remove();
+            }, 600);
+        });
+        
+        // Smooth Scrolling for Navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Parallax Effect
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            const parallaxElements = document.querySelectorAll('.parallax');
+            
+            parallaxElements.forEach(element => {
+                element.style.backgroundPositionY = `${scrollPosition * 0.5}px`;
+            });
+            
+            // Floating planets animation
+            const planets = document.querySelectorAll('.planet, .ring');
+            planets.forEach((planet, index) => {
+                const speed = 0.1 + (index * 0.05);
+                planet.style.transform = `translateY(${scrollPosition * speed}px)`;
+            });
+        });
+        
+        // Glow effect on hover for service cards
+        const serviceCards = document.querySelectorAll('.service-card');
+        serviceCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                const icon = this.querySelector('i');
+                const color = window.getComputedStyle(icon).color;
+                this.style.boxShadow = `0 0 20px ${color}`;
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.boxShadow = '';
+            });
+        });
+    </script>
+</body>
+</html>
